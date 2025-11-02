@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export interface Favorite {
   id: string;
@@ -34,16 +34,19 @@ export function useFavorites() {
     return favorites.some((f) => f.id === id);
   };
 
-  const cleanupFavorites = (type: "announcement" | "event", validIds: string[]) => {
-    const filtered = favorites.filter((f) => {
-      if (f.type !== type) return true;
-      return validIds.includes(f.id);
+  const cleanupFavorites = useCallback((type: "announcement" | "event", validIds: string[]) => {
+    setFavorites((prevFavorites) => {
+      const filtered = prevFavorites.filter((f) => {
+        if (f.type !== type) return true;
+        return validIds.includes(f.id);
+      });
+      if (filtered.length !== prevFavorites.length) {
+        localStorage.setItem("favorites", JSON.stringify(filtered));
+        return filtered;
+      }
+      return prevFavorites;
     });
-    if (filtered.length !== favorites.length) {
-      setFavorites(filtered);
-      localStorage.setItem("favorites", JSON.stringify(filtered));
-    }
-  };
+  }, []);
 
   return { favorites, addFavorite, removeFavorite, isFavorite, cleanupFavorites };
 }
