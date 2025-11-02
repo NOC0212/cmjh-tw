@@ -34,12 +34,12 @@ const Progress = React.forwardRef<
                 <div className="absolute right-0 top-0 h-full w-12 bg-gradient-to-l from-white/30 via-purple-300/20 to-transparent pointer-events-none" />
                 <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-white/50 to-transparent animate-pulse pointer-events-none" />
                 
-                {/* 分界處冒出的白色粒子（向左噴射） */}
+                {/* 分界處冒出的白色粒子（向右噴射） */}
                 <div className="absolute right-0 top-0 h-full w-1 overflow-visible pointer-events-none">
                   {[...Array(15)].map((_, i) => (
                     <div
                       key={`particle-${i}`}
-                      className="absolute h-1 w-1 bg-white rounded-full animate-particle-burst-reverse shadow-[0_0_4px_rgba(255,255,255,0.8)]"
+                      className="absolute h-1 w-1 bg-white rounded-full animate-particle-burst shadow-[0_0_4px_rgba(255,255,255,0.8)]"
                       style={{
                         top: `${20 + Math.random() * 60}%`,
                         animationDelay: `${(i * 0.15)}s`,
