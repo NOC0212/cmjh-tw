@@ -14,11 +14,6 @@ const Index = () => {
   const calendarAnim = useScrollAnimation();
   const countdownAnim = useScrollAnimation();
 
-  // 設定段考日期 - 台灣時區 (GMT+8)
-  // 格式：Date.UTC(年, 月-1, 日, 時-8, 分, 秒) - 需要減8小時來設定為台灣時間
-  const examDate = new Date(Date.UTC(2025, 10, 27, -8, 0, 0)); // 第二次段考：11/27 台灣時間 00:00
-  const examStartDate = new Date(Date.UTC(2025, 9, 16, -8, 0, 0)); // 學期開始日期
-
   return (
     <div className="min-h-screen flex w-full bg-background">
       <div className="flex-1 flex flex-col">
@@ -50,11 +45,7 @@ const Index = () => {
                   : "opacity-0 translate-y-8"
               }`}
             >
-              <CountdownTimer 
-                targetDate={examDate} 
-                startDate={examStartDate}
-                label="第二次段考倒數計時 (11/27-11/28)" 
-              />
+              <CountdownTimer />
             </div>
 
             <div

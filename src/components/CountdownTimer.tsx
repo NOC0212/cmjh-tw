@@ -1,14 +1,35 @@
 import { useEffect, useState } from "react";
-import { Clock } from "lucide-react";
+import { Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 
-interface CountdownTimerProps {
+interface CountdownConfig {
   targetDate: Date;
   startDate?: Date;
   label: string;
+  progressLabel: string;
 }
 
-export function CountdownTimer({ targetDate, startDate, label }: CountdownTimerProps) {
+// 倒數計時配置列表 - 可以直接在這裡修改
+const countdownConfigs: CountdownConfig[] = [
+  {
+    targetDate: new Date(Date.UTC(2025, 10, 12, 16, 0, 0)), // 2025-11-13 00:00 台灣時間
+    startDate: new Date(Date.UTC(2025, 9, 2, 16, 0, 0)), // 2025-10-03 00:00 台灣時間
+    label: "第二次段考倒數",
+    progressLabel: "上次至本次段考進度條"
+  },
+  {
+    targetDate: new Date(Date.UTC(2025, 11, 31, 16, 0, 0)), // 2026-01-01 00:00 台灣時間
+    startDate: new Date(Date.UTC(2025, 0, 1, 16, 0, 0)), // 2025-01-01 00:00 台灣時間
+    label: "2026年倒數",
+    progressLabel: "2025年進度條"
+  }
+];
+
+interface CountdownTimerProps {}
+
+export function CountdownTimer({}: CountdownTimerProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState<{
     days: number;
     hours: number;
@@ -16,6 +37,9 @@ export function CountdownTimer({ targetDate, startDate, label }: CountdownTimerP
     seconds: number;
   } | null>(null);
   const [progress, setProgress] = useState(0);
+
+  const currentConfig = countdownConfigs[currentIndex];
+  const { targetDate, startDate, label, progressLabel } = currentConfig;
 
   useEffect(() => {
     const getTaiwanTime = () => {
@@ -59,6 +83,14 @@ export function CountdownTimer({ targetDate, startDate, label }: CountdownTimerP
     return () => clearInterval(timer);
   }, [targetDate, startDate]);
 
+  const handlePrevious = () => {
+    setCurrentIndex((prev) => (prev - 1 + countdownConfigs.length) % countdownConfigs.length);
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % countdownConfigs.length);
+  };
+
   const isComplete = progress >= 100;
 
   if (!timeLeft && !isComplete) {
@@ -66,10 +98,33 @@ export function CountdownTimer({ targetDate, startDate, label }: CountdownTimerP
   }
 
   return (
-    <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl p-6 border border-primary/20">
-      <div className="flex items-center gap-2 mb-4">
-        <Clock className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold text-foreground">{label}</h3>
+    <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl p-6 border border-primary/20 relative">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Clock className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold text-foreground">{label}</h3>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={handlePrevious}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-xs text-muted-foreground px-2">
+            {currentIndex + 1}/{countdownConfigs.length}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={handleNext}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       
       {!isComplete ? (
@@ -96,7 +151,7 @@ export function CountdownTimer({ targetDate, startDate, label }: CountdownTimerP
       
       <div className="space-y-2">
         <div className="flex justify-between text-sm text-muted-foreground">
-          <span>上次至本次段考進度條</span>
+          <span>{progressLabel}</span>
           <span>{isComplete ? "100% 完成" : `${(100 - progress).toFixed(1)}% 剩餘`}</span>
         </div>
         <Progress value={progress} gradient className="h-2" />
