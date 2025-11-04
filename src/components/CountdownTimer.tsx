@@ -32,6 +32,12 @@ const countdownConfigs: CountdownConfig[] = [
     startDate: taiwanTime(2025, 1, 1, 0, 0, 0),    // 2025年1月1日 00:00
     label: "2026年倒數",
     progressLabel: "2025年進度條"
+  },
+  {
+    targetDate: taiwanTime(2025, 11, 4, 22, 20, 0),   // 2026年1月1日 00:00
+    startDate: taiwanTime(2025, 11, 4, 0, 0, 0),    // 2025年1月1日 00:00
+    label: "測試",
+    progressLabel: "2025年進度條"
   }
 ];
 
