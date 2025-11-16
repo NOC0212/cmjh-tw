@@ -31,12 +31,14 @@
 
 **格式:**
 
-``` {
+```
+ {
     targetDate: taiwanTime(9999, 13, 32, 25, 61, 61), // 9999年13月32日 25:61:61
     startDate: taiwanTime(9999, 13, 40, 0, 0, 0),   // 9999年13月40日 00:00:00
     label: "標題",
     progressLabel: "說明(子標題)"
-  }, ```
+  },
+```
 
 ### 天氣預報 
 使用中央氣象署(CWA) API，支援22個縣市選擇和自動定位功能，顯示當前天氣和未來3個時段的預報。
@@ -50,8 +52,10 @@
 ### 常用網站
 由多次更改及投票後決定出來的最常使用網站
 可在/src/components/CommonSites.tsx 進行更改
+
 **格式:**
-{ name: "範例(顯示名稱)", url: "127.0.0.1(網址)" },
+
+``` { name: "範例(顯示名稱)", url: "127.0.0.1(網址)" },```
 
 ### 行政公告
 使用套件requests及beautifulsoup4進行的github Action 爬取並使用json存儲，可於/public/data/announcements.json 查看
