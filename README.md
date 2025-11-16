@@ -51,14 +51,16 @@
 
 ### 常用網站
 由多次更改及投票後決定出來的最常使用網站
-可在/src/components/CommonSites.tsx 進行更改
+可在``` /src/components/CommonSites.tsx ``` 進行更改
 
 **格式:**
 
 ``` { name: "範例(顯示名稱)", url: "127.0.0.1(網址)" },```
 
 ### 行政公告
-使用套件requests及beautifulsoup4進行的github Action 爬取並使用json存儲，可於/public/data/announcements.json 查看
-每5分鐘更新一次，原碼可在 **scraper.py** 查看，支援所有使用xoops架設的文章列表頁收藏
+使用套件requests及beautifulsoup4進行的github Action 爬取並使用json存儲，可於``` /public/data/announcements.json ``` 查看
+
+每5分鐘更新一次，原碼可在 ``` scraper.py ``` 查看，支援所有使用xoops架設的文章列表頁收藏
+
 可以翻頁及收藏，同步原網站的頁面排序，收藏內容會在刷新時顯示於導覽列的收藏區塊
 ### 行事曆
