@@ -78,8 +78,18 @@ export const WeatherWidget = () => {
       );
       const data = await response.json();
       
-      if (data.success === "true" && data.records?.locations?.[0]?.location?.[0]) {
-        setWeatherData(data.records.locations[0].location[0]);
+      if (data.success === "true" && data.records?.locations?.[0]?.location) {
+        // 找到匹配的區域
+        const location = data.records.locations[0].location.find(
+          (loc: any) => loc.locationName === district
+        );
+        if (location) {
+          setWeatherData(location);
+        } else {
+          console.error("District not found in response");
+        }
+      } else {
+        console.error("Invalid API response structure");
       }
     } catch (error) {
       console.error("Failed to fetch weather:", error);
@@ -125,6 +135,13 @@ export const WeatherWidget = () => {
 
   useEffect(() => {
     fetchWeather(selectedDistrict);
+    
+    // 每30分鐘更新一次
+    const interval = setInterval(() => {
+      fetchWeather(selectedDistrict);
+    }, 30 * 60 * 1000); // 30分鐘 = 30 * 60 * 1000 毫秒
+    
+    return () => clearInterval(interval);
   }, [selectedDistrict]);
 
   const getWeatherIcon = (wx: string) => {
