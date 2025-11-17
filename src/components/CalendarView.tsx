@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -43,8 +43,8 @@ export function CalendarView() {
       });
   }, []);
 
-  const months = Object.keys(calendarData).sort();
-  const currentMonthIndex = months.indexOf(selectedMonth);
+  const months = useMemo(() => Object.keys(calendarData).sort(), [calendarData]);
+  const currentMonthIndex = useMemo(() => months.indexOf(selectedMonth), [months, selectedMonth]);
 
   const handlePrevMonth = () => {
     if (currentMonthIndex > 0) {
@@ -62,6 +62,19 @@ export function CalendarView() {
     }
   };
 
+  const eventsByDay = useMemo(() => {
+    if (!selectedMonth || !calendarData[selectedMonth]) return {};
+    
+    const events = calendarData[selectedMonth];
+    const grouped: { [key: number]: CalendarEvent[] } = {};
+    events.forEach((event) => {
+      const day = parseInt(event.date.split("-")[2], 10);
+      if (!grouped[day]) grouped[day] = [];
+      grouped[day].push(event);
+    });
+    return grouped;
+  }, [selectedMonth, calendarData]);
+
   const renderCalendar = () => {
     if (!selectedMonth || !calendarData[selectedMonth]) return null;
 
@@ -71,14 +84,6 @@ export function CalendarView() {
     const startWeekday = firstDay.getDay();
     const daysInMonth = lastDay.getDate();
     const today = new Date();
-
-    const events = calendarData[selectedMonth];
-    const eventsByDay: { [key: number]: CalendarEvent[] } = {};
-    events.forEach((event) => {
-      const day = parseInt(event.date.split("-")[2], 10);
-      if (!eventsByDay[day]) eventsByDay[day] = [];
-      eventsByDay[day].push(event);
-    });
 
     const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
     const calendarCells = [];

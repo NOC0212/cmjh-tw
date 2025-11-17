@@ -7,62 +7,79 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const API_KEY = "CWA-6AEC6F91-948A-464F-9DC1-AC1B8361153D";
 
-const CITIES = [
-  { value: "臺北市", label: "臺北市" },
-  { value: "新北市", label: "新北市" },
-  { value: "桃園市", label: "桃園市" },
-  { value: "臺中市", label: "臺中市" },
-  { value: "臺南市", label: "臺南市" },
-  { value: "高雄市", label: "高雄市" },
-  { value: "基隆市", label: "基隆市" },
-  { value: "新竹市", label: "新竹市" },
-  { value: "嘉義市", label: "嘉義市" },
-  { value: "新竹縣", label: "新竹縣" },
-  { value: "苗栗縣", label: "苗栗縣" },
-  { value: "彰化縣", label: "彰化縣" },
-  { value: "南投縣", label: "南投縣" },
-  { value: "雲林縣", label: "雲林縣" },
-  { value: "嘉義縣", label: "嘉義縣" },
-  { value: "屏東縣", label: "屏東縣" },
-  { value: "宜蘭縣", label: "宜蘭縣" },
-  { value: "花蓮縣", label: "花蓮縣" },
-  { value: "臺東縣", label: "臺東縣" },
-  { value: "澎湖縣", label: "澎湖縣" },
-  { value: "金門縣", label: "金門縣" },
-  { value: "連江縣", label: "連江縣" },
+const DISTRICTS = [
+  { value: "中西區", label: "中西區" },
+  { value: "東區", label: "東區" },
+  { value: "南區", label: "南區" },
+  { value: "北區", label: "北區" },
+  { value: "安平區", label: "安平區" },
+  { value: "安南區", label: "安南區" },
+  { value: "永康區", label: "永康區" },
+  { value: "歸仁區", label: "歸仁區" },
+  { value: "新化區", label: "新化區" },
+  { value: "左鎮區", label: "左鎮區" },
+  { value: "玉井區", label: "玉井區" },
+  { value: "楠西區", label: "楠西區" },
+  { value: "南化區", label: "南化區" },
+  { value: "仁德區", label: "仁德區" },
+  { value: "關廟區", label: "關廟區" },
+  { value: "龍崎區", label: "龍崎區" },
+  { value: "官田區", label: "官田區" },
+  { value: "麻豆區", label: "麻豆區" },
+  { value: "佳里區", label: "佳里區" },
+  { value: "西港區", label: "西港區" },
+  { value: "七股區", label: "七股區" },
+  { value: "將軍區", label: "將軍區" },
+  { value: "學甲區", label: "學甲區" },
+  { value: "北門區", label: "北門區" },
+  { value: "新營區", label: "新營區" },
+  { value: "後壁區", label: "後壁區" },
+  { value: "白河區", label: "白河區" },
+  { value: "東山區", label: "東山區" },
+  { value: "六甲區", label: "六甲區" },
+  { value: "下營區", label: "下營區" },
+  { value: "柳營區", label: "柳營區" },
+  { value: "鹽水區", label: "鹽水區" },
+  { value: "善化區", label: "善化區" },
+  { value: "大內區", label: "大內區" },
+  { value: "山上區", label: "山上區" },
+  { value: "新市區", label: "新市區" },
+  { value: "安定區", label: "安定區" },
 ];
+
+interface WeatherElement {
+  elementName: string;
+  time: Array<{
+    startTime: string;
+    endTime: string;
+    elementValue: Array<{
+      value: string;
+      measures: string;
+    }>;
+  }>;
+}
 
 interface WeatherData {
   locationName: string;
-  weatherElement: {
-    elementName: string;
-    time: Array<{
-      startTime: string;
-      endTime: string;
-      parameter: {
-        parameterName: string;
-        parameterValue?: string;
-      };
-    }>;
-  }[];
+  weatherElement: WeatherElement[];
 }
 
 export const WeatherWidget = () => {
-  const [selectedCity, setSelectedCity] = useState("臺南市");
+  const [selectedDistrict, setSelectedDistrict] = useState("東區");
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAutoDetecting, setIsAutoDetecting] = useState(false);
 
-  const fetchWeather = async (city: string) => {
+  const fetchWeather = async (district: string) => {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=${API_KEY}&locationName=${encodeURIComponent(city)}`
+        `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-079?Authorization=${API_KEY}&locationName=${encodeURIComponent(district)}`
       );
       const data = await response.json();
       
-      if (data.success === "true" && data.records?.location?.[0]) {
-        setWeatherData(data.records.location[0]);
+      if (data.success === "true" && data.records?.locations?.[0]?.location?.[0]) {
+        setWeatherData(data.records.locations[0].location[0]);
       }
     } catch (error) {
       console.error("Failed to fetch weather:", error);
@@ -76,17 +93,27 @@ export const WeatherWidget = () => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          // 簡單的地理位置對應（實際應用可以使用反向地理編碼API）
-          const { latitude } = position.coords;
-          let detectedCity = "臺南市";
+          const { latitude, longitude } = position.coords;
+          let detectedDistrict = "東區";
           
-          if (latitude > 25.0) detectedCity = "臺北市";
-          else if (latitude > 24.5) detectedCity = "新竹市";
-          else if (latitude > 24.0) detectedCity = "臺中市";
-          else if (latitude > 23.0) detectedCity = "臺南市";
-          else detectedCity = "高雄市";
+          // 台南市各區大致經緯度範圍判斷
+          if (latitude >= 23.0 && latitude <= 23.05 && longitude >= 120.2 && longitude <= 120.25) {
+            detectedDistrict = "中西區";
+          } else if (latitude >= 22.98 && latitude <= 23.03 && longitude >= 120.2 && longitude <= 120.25) {
+            detectedDistrict = "東區";
+          } else if (latitude >= 22.95 && latitude <= 23.0 && longitude >= 120.18 && longitude <= 120.22) {
+            detectedDistrict = "南區";
+          } else if (latitude >= 23.01 && latitude <= 23.06 && longitude >= 120.18 && longitude <= 120.23) {
+            detectedDistrict = "北區";
+          } else if (latitude >= 22.99 && latitude <= 23.02 && longitude >= 120.15 && longitude <= 120.19) {
+            detectedDistrict = "安平區";
+          } else if (latitude >= 23.03 && latitude <= 23.08 && longitude >= 120.15 && longitude <= 120.22) {
+            detectedDistrict = "安南區";
+          } else if (latitude >= 23.02 && latitude <= 23.06 && longitude >= 120.23 && longitude <= 120.28) {
+            detectedDistrict = "永康區";
+          }
           
-          setSelectedCity(detectedCity);
+          setSelectedDistrict(detectedDistrict);
           setIsAutoDetecting(false);
         },
         () => {
@@ -97,8 +124,8 @@ export const WeatherWidget = () => {
   };
 
   useEffect(() => {
-    fetchWeather(selectedCity);
-  }, [selectedCity]);
+    fetchWeather(selectedDistrict);
+  }, [selectedDistrict]);
 
   const getWeatherIcon = (wx: string) => {
     if (wx.includes("雨")) return <CloudRain className="h-8 w-8" />;
@@ -107,41 +134,60 @@ export const WeatherWidget = () => {
     return <Sun className="h-8 w-8" />;
   };
 
+  const getElementValue = (elementName: string, timeIndex: number = 0) => {
+    const element = weatherData?.weatherElement.find(e => e.elementName === elementName);
+    return element?.time[timeIndex]?.elementValue?.[0]?.value || "N/A";
+  };
+
   const getCurrentWeather = () => {
     if (!weatherData) return null;
     
-    const wx = weatherData.weatherElement.find(e => e.elementName === "Wx");
-    const pop = weatherData.weatherElement.find(e => e.elementName === "PoP");
-    const minT = weatherData.weatherElement.find(e => e.elementName === "MinT");
-    const maxT = weatherData.weatherElement.find(e => e.elementName === "MaxT");
-    
     return {
-      weather: wx?.time[0]?.parameter?.parameterName || "N/A",
-      pop: pop?.time[0]?.parameter?.parameterName || "0",
-      minTemp: minT?.time[0]?.parameter?.parameterName || "N/A",
-      maxTemp: maxT?.time[0]?.parameter?.parameterName || "N/A",
+      weather: getElementValue("Wx"),
+      temp: getElementValue("T"),
+      feelTemp: getElementValue("AT"),
+      pop: getElementValue("PoP12h"),
+      rh: getElementValue("RH"),
+      ws: getElementValue("WS"),
+      wd: getElementValue("WD"),
+      ci: getElementValue("CI"),
+      uvi: getElementValue("UVI"),
     };
   };
 
-  const getForecast = () => {
+  const getDailyForecast = () => {
     if (!weatherData) return [];
     
-    const wx = weatherData.weatherElement.find(e => e.elementName === "Wx");
-    const minT = weatherData.weatherElement.find(e => e.elementName === "MinT");
-    const maxT = weatherData.weatherElement.find(e => e.elementName === "MaxT");
-    const pop = weatherData.weatherElement.find(e => e.elementName === "PoP");
+    const wxElement = weatherData.weatherElement.find(e => e.elementName === "Wx");
+    if (!wxElement) return [];
     
-    return wx?.time.slice(0, 3).map((item, index) => ({
-      time: new Date(item.startTime).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' }),
-      weather: item.parameter.parameterName,
-      minTemp: minT?.time[index]?.parameter?.parameterName || "N/A",
-      maxTemp: maxT?.time[index]?.parameter?.parameterName || "N/A",
-      pop: pop?.time[index]?.parameter?.parameterName || "0",
-    })) || [];
+    // 每天取早上6點的資料作為代表
+    const dailyData: any[] = [];
+    const seenDates = new Set<string>();
+    
+    wxElement.time.forEach((timeSlot, index) => {
+      const date = new Date(timeSlot.startTime);
+      const dateKey = date.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' });
+      
+      if (!seenDates.has(dateKey) && dailyData.length < 3) {
+        seenDates.add(dateKey);
+        dailyData.push({
+          date: dateKey,
+          dayOfWeek: date.toLocaleDateString('zh-TW', { weekday: 'short' }),
+          weather: getElementValue("Wx", index),
+          maxTemp: getElementValue("MaxT", index),
+          minTemp: getElementValue("MinT", index),
+          pop: getElementValue("PoP12h", index),
+          rh: getElementValue("RH", index),
+        });
+      }
+    });
+    
+    return dailyData;
   };
 
   const current = getCurrentWeather();
-  const forecast = getForecast();
+  const forecast = getDailyForecast();
 
   return (
     <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 hover:shadow-lg transition-all duration-300">
@@ -161,14 +207,14 @@ export const WeatherWidget = () => {
             自動定位
           </Button>
         </div>
-        <Select value={selectedCity} onValueChange={setSelectedCity}>
+        <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
           <SelectTrigger className="mt-2">
-            <SelectValue />
+            <SelectValue placeholder="選擇行政區" />
           </SelectTrigger>
-          <SelectContent>
-            {CITIES.map((city) => (
-              <SelectItem key={city.value} value={city.value}>
-                {city.label}
+          <SelectContent className="max-h-[300px]">
+            {DISTRICTS.map((district) => (
+              <SelectItem key={district.value} value={district.value}>
+                臺南市{district.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -189,49 +235,79 @@ export const WeatherWidget = () => {
           <>
             {/* 當前天氣 */}
             <div className="p-4 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">現在天氣</p>
-                  <p className="text-xl font-semibold">{current.weather}</p>
-                  <div className="flex items-center gap-4 mt-2">
-                    <div className="flex items-center gap-1">
-                      <Wind className="h-4 w-4 text-primary" />
-                      <span className="text-2xl font-bold">{current.minTemp}°</span>
-                      <span className="text-muted-foreground">~</span>
-                      <span className="text-2xl font-bold">{current.maxTemp}°</span>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground mb-1">天氣現象</p>
+                  <p className="text-xl font-semibold mb-3">{current.weather}</p>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-muted-foreground text-xs">溫度</p>
+                      <p className="font-semibold">{current.temp}°C</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">體感溫度</p>
+                      <p className="font-semibold">{current.feelTemp}°C</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">相對濕度</p>
+                      <p className="font-semibold">{current.rh}%</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">降雨機率</p>
+                      <p className="font-semibold">{current.pop}%</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">風速</p>
+                      <p className="font-semibold">{current.ws} m/s</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">風向</p>
+                      <p className="font-semibold">{current.wd}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">舒適度</p>
+                      <p className="font-semibold">{current.ci}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">紫外線指數</p>
+                      <p className="font-semibold">{current.uvi}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 mt-2">
-                    <Droplets className="h-4 w-4 text-blue-500" />
-                    <span className="text-sm">降雨機率 {current.pop}%</span>
-                  </div>
                 </div>
-                <div className="text-primary">
+                <div className="text-primary ml-4">
                   {getWeatherIcon(current.weather)}
                 </div>
               </div>
             </div>
 
-            {/* 未來預報 */}
-            <div className="grid grid-cols-3 gap-2">
-              {forecast.map((day, index) => (
-                <div
-                  key={index}
-                  className="p-3 rounded-lg bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 hover:border-primary/30 transition-all"
-                >
-                  <p className="text-xs text-muted-foreground mb-2">{day.time}</p>
-                  <div className="text-primary mb-2 flex justify-center">
-                    {getWeatherIcon(day.weather)}
+            {/* 未來3天預報 */}
+            <div>
+              <h3 className="text-sm font-semibold mb-2 text-muted-foreground">未來3天預報</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {forecast.map((day, index) => (
+                  <div
+                    key={index}
+                    className="p-3 rounded-lg bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 hover:border-primary/30 transition-all"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="text-xs text-muted-foreground">{day.dayOfWeek}</p>
+                        <p className="text-sm font-semibold">{day.date}</p>
+                      </div>
+                      <div className="text-primary">
+                        {getWeatherIcon(day.weather)}
+                      </div>
+                    </div>
+                    <p className="text-xs mb-2 truncate">{day.weather}</p>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold">{day.minTemp}° ~ {day.maxTemp}°</span>
+                      <span className="text-muted-foreground">
+                        <Droplets className="h-3 w-3 inline" /> {day.pop}%
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-xs text-center mb-1 truncate">{day.weather}</p>
-                  <p className="text-sm font-semibold text-center">
-                    {day.minTemp}° ~ {day.maxTemp}°
-                  </p>
-                  <p className="text-xs text-center text-muted-foreground mt-1">
-                    <Droplets className="h-3 w-3 inline" /> {day.pop}%
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </>
         ) : (
