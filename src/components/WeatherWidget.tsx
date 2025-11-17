@@ -77,19 +77,92 @@ export const WeatherWidget = () => {
         `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-079?Authorization=${API_KEY}&locationName=${encodeURIComponent(district)}`
       );
       const data = await response.json();
-      
-      if (data.success === "true" && data.records?.locations?.[0]?.location) {
-        // 找到匹配的區域
-        const location = data.records.locations[0].location.find(
-          (loc: any) => loc.locationName === district
-        );
-        if (location) {
-          setWeatherData(location);
+
+      if (data.success === "true") {
+        const records = data.records || data.Records;
+        const locationsList =
+          records?.locations?.[0]?.location ||
+          records?.Locations?.[0]?.Location;
+
+        if (Array.isArray(locationsList)) {
+          const rawLoc = locationsList.find(
+            (l: any) => (l.locationName || l.LocationName) === district
+          );
+
+          if (rawLoc) {
+            const normalize = (loc: any): WeatherData => {
+              const getSeriesByKey = (valueKey: string) => {
+                const elements = loc.weatherElement || loc.WeatherElement || [];
+                for (const e of elements) {
+                  const times = e.time || e.Time || [];
+                  const first = times?.[0];
+                  const ev = first?.elementValue?.[0] || first?.ElementValue?.[0];
+                  if (ev && valueKey in ev) {
+                    return times.map((t: any) => ({
+                      startTime: t.startTime || t.StartTime,
+                      endTime: t.endTime || t.EndTime,
+                      elementValue: [
+                        {
+                          value:
+                            t.elementValue?.[0]?.[valueKey] ??
+                            t.ElementValue?.[0]?.[valueKey] ??
+                            "N/A",
+                          measures: "",
+                        },
+                      ],
+                    }));
+                  }
+                }
+                return null;
+              };
+
+              const buildElement = (name: string, keyCandidates: string[]) => {
+                let series: any = null;
+                for (const k of keyCandidates) {
+                  series = getSeriesByKey(k);
+                  if (series) break;
+                }
+                return series
+                  ? { elementName: name, time: series }
+                  : { elementName: name, time: [] };
+              };
+
+              const elems = [
+                buildElement("Wx", ["WeatherDescription", "Weather"]),
+                buildElement("T", ["Temperature"]),
+                buildElement("AT", [
+                  "ApparentTemperature",
+                  "MaxApparentTemperature",
+                  "MinApparentTemperature",
+                ]),
+                buildElement("PoP12h", ["ProbabilityOfPrecipitation"]),
+                buildElement("RH", ["RelativeHumidity"]),
+                buildElement("WS", ["WindSpeed"]),
+                buildElement("WD", ["WindDirection"]),
+                buildElement("CI", [
+                  "MaxComfortIndexDescription",
+                  "MinComfortIndexDescription",
+                ]),
+                buildElement("UVI", ["UVIndex"]),
+                buildElement("MaxT", ["MaxTemperature"]),
+                buildElement("MinT", ["MinTemperature"]),
+              ];
+
+              return {
+                locationName: loc.locationName || loc.LocationName,
+                weatherElement: elems,
+              } as WeatherData;
+            };
+
+            setWeatherData(normalize(rawLoc));
+          } else {
+            console.error("District not found in response");
+          }
         } else {
-          console.error("District not found in response");
+          console.error("Invalid API response structure");
         }
       } else {
-        console.error("Invalid API response structure");
+        console.error("API success flag is false");
       }
     } catch (error) {
       console.error("Failed to fetch weather:", error);
