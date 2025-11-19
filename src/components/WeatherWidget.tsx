@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Cloud, CloudRain, Sun, CloudSnow, Wind, Droplets, MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { Cloud, CloudRain, Sun, CloudSnow, Droplets, ChevronDown, ChevronUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -69,8 +69,7 @@ export const WeatherWidget = () => {
   const [selectedDistrict, setSelectedDistrict] = useState("東區");
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAutoDetecting, setIsAutoDetecting] = useState(false);
-  const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
 
   const fetchWeather = async (district: string) => {
@@ -174,40 +173,6 @@ export const WeatherWidget = () => {
     }
   };
 
-  const autoDetectLocation = () => {
-    setIsAutoDetecting(true);
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          let detectedDistrict = "東區";
-          
-          // 台南市各區大致經緯度範圍判斷
-          if (latitude >= 23.0 && latitude <= 23.05 && longitude >= 120.2 && longitude <= 120.25) {
-            detectedDistrict = "中西區";
-          } else if (latitude >= 22.98 && latitude <= 23.03 && longitude >= 120.2 && longitude <= 120.25) {
-            detectedDistrict = "東區";
-          } else if (latitude >= 22.95 && latitude <= 23.0 && longitude >= 120.18 && longitude <= 120.22) {
-            detectedDistrict = "南區";
-          } else if (latitude >= 23.01 && latitude <= 23.06 && longitude >= 120.18 && longitude <= 120.23) {
-            detectedDistrict = "北區";
-          } else if (latitude >= 22.99 && latitude <= 23.02 && longitude >= 120.15 && longitude <= 120.19) {
-            detectedDistrict = "安平區";
-          } else if (latitude >= 23.03 && latitude <= 23.08 && longitude >= 120.15 && longitude <= 120.22) {
-            detectedDistrict = "安南區";
-          } else if (latitude >= 23.02 && latitude <= 23.06 && longitude >= 120.23 && longitude <= 120.28) {
-            detectedDistrict = "永康區";
-          }
-          
-          setSelectedDistrict(detectedDistrict);
-          setIsAutoDetecting(false);
-        },
-        () => {
-          setIsAutoDetecting(false);
-        }
-      );
-    }
-  };
 
   useEffect(() => {
     fetchWeather(selectedDistrict);
@@ -290,46 +255,37 @@ export const WeatherWidget = () => {
   return (
     <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 hover:shadow-lg transition-all duration-300">
       <CardHeader className="pb-3">
-        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-          天氣資訊
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            天氣資訊
+          </CardTitle>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </div>
         
-        <Collapsible open={isLocationOpen} onOpenChange={setIsLocationOpen}>
-          <div className="flex items-center justify-between mt-2">
-            <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="選擇行政區" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {DISTRICTS.map((district) => (
-                  <SelectItem key={district.value} value={district.value}>
-                    臺南市{district.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="ml-2">
-                {isLocationOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </Button>
-            </CollapsibleTrigger>
-          </div>
-          <CollapsibleContent>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={autoDetectLocation}
-              disabled={isAutoDetecting}
-              className="gap-2 w-full mt-2"
-            >
-              <MapPin className="h-4 w-4" />
-              自動定位
-            </Button>
-          </CollapsibleContent>
-        </Collapsible>
+        <div className="mt-2">
+          <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
+            <SelectTrigger>
+              <SelectValue placeholder="選擇行政區" />
+            </SelectTrigger>
+            <SelectContent className="max-h-[300px]">
+              {DISTRICTS.map((district) => (
+                <SelectItem key={district.value} value={district.value}>
+                  臺南市{district.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      {isExpanded && (
+        <CardContent className="space-y-4">
         {loading ? (
           <div className="space-y-3">
             <Skeleton className="h-24 w-full" />
@@ -463,7 +419,8 @@ export const WeatherWidget = () => {
         ) : (
           <p className="text-center text-muted-foreground">無法取得天氣資訊</p>
         )}
-      </CardContent>
+        </CardContent>
+      )}
     </Card>
   );
 };
