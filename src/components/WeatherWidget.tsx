@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Cloud, CloudRain, Sun, CloudSnow, Wind, Droplets, MapPin } from "lucide-react";
+import { Cloud, CloudRain, Sun, CloudSnow, Wind, Droplets, MapPin, ChevronDown, ChevronUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const API_KEY = "CWA-6AEC6F91-948A-464F-9DC1-AC1B8361153D";
 
@@ -69,6 +70,8 @@ export const WeatherWidget = () => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAutoDetecting, setIsAutoDetecting] = useState(false);
+  const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const [expandedDay, setExpandedDay] = useState<number | null>(null);
 
   const fetchWeather = async (district: string) => {
     setLoading(true);
@@ -269,6 +272,11 @@ export const WeatherWidget = () => {
           minTemp: getElementValue("MinT", index),
           pop: getElementValue("PoP12h", index),
           rh: getElementValue("RH", index),
+          ws: getElementValue("WS", index),
+          wd: getElementValue("WD", index),
+          feelTemp: getElementValue("AT", index),
+          ci: getElementValue("CI", index),
+          uvi: getElementValue("UVI", index),
         });
       }
     });
@@ -282,33 +290,43 @@ export const WeatherWidget = () => {
   return (
     <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 hover:shadow-lg transition-all duration-300">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            天氣資訊
-          </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={autoDetectLocation}
-            disabled={isAutoDetecting}
-            className="gap-2"
-          >
-            <MapPin className="h-4 w-4" />
-            自動定位
-          </Button>
-        </div>
-        <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
-          <SelectTrigger className="mt-2">
-            <SelectValue placeholder="選擇行政區" />
-          </SelectTrigger>
-          <SelectContent className="max-h-[300px]">
-            {DISTRICTS.map((district) => (
-              <SelectItem key={district.value} value={district.value}>
-                臺南市{district.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          天氣資訊
+        </CardTitle>
+        
+        <Collapsible open={isLocationOpen} onOpenChange={setIsLocationOpen}>
+          <div className="flex items-center justify-between mt-2">
+            <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="選擇行政區" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {DISTRICTS.map((district) => (
+                  <SelectItem key={district.value} value={district.value}>
+                    臺南市{district.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="ml-2">
+                {isLocationOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={autoDetectLocation}
+              disabled={isAutoDetecting}
+              className="gap-2 w-full mt-2"
+            >
+              <MapPin className="h-4 w-4" />
+              自動定位
+            </Button>
+          </CollapsibleContent>
+        </Collapsible>
       </CardHeader>
       
       <CardContent className="space-y-4">
@@ -327,24 +345,14 @@ export const WeatherWidget = () => {
             <div className="p-4 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground mb-1">天氣現象</p>
-                  <p className="text-xl font-semibold mb-3">{current.weather}</p>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <p className="text-muted-foreground text-xs">溫度</p>
                       <p className="font-semibold">{current.temp}°C</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground text-xs">體感溫度</p>
-                      <p className="font-semibold">{current.feelTemp}°C</p>
-                    </div>
-                    <div>
                       <p className="text-muted-foreground text-xs">相對濕度</p>
                       <p className="font-semibold">{current.rh}%</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground text-xs">降雨機率</p>
-                      <p className="font-semibold">{current.pop}%</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground text-xs">風速</p>
@@ -353,6 +361,14 @@ export const WeatherWidget = () => {
                     <div>
                       <p className="text-muted-foreground text-xs">風向</p>
                       <p className="font-semibold">{current.wd}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">降雨機率</p>
+                      <p className="font-semibold">{current.pop}%</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">體感溫度</p>
+                      <p className="font-semibold">{current.feelTemp}°C</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground text-xs">舒適度</p>
@@ -375,27 +391,71 @@ export const WeatherWidget = () => {
               <h3 className="text-sm font-semibold mb-2 text-muted-foreground">未來3天預報</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {forecast.map((day, index) => (
-                  <div
+                  <Collapsible 
                     key={index}
-                    className="p-3 rounded-lg bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 hover:border-primary/30 transition-all"
+                    open={expandedDay === index}
+                    onOpenChange={(open) => setExpandedDay(open ? index : null)}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <p className="text-xs text-muted-foreground">{day.dayOfWeek}</p>
-                        <p className="text-sm font-semibold">{day.date}</p>
-                      </div>
-                      <div className="text-primary">
-                        {getWeatherIcon(day.weather)}
-                      </div>
+                    <div className="p-3 rounded-lg bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 hover:border-primary/30 transition-all">
+                      <CollapsibleTrigger className="w-full cursor-pointer">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-left">
+                            <p className="text-xs text-muted-foreground">{day.dayOfWeek}</p>
+                            <p className="text-sm font-semibold">{day.date}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-primary">
+                              {getWeatherIcon(day.weather)}
+                            </div>
+                            {expandedDay === index ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-semibold">{day.minTemp}° ~ {day.maxTemp}°</span>
+                          <span className="text-muted-foreground">
+                            <Droplets className="h-3 w-3 inline" /> {day.pop}%
+                          </span>
+                        </div>
+                      </CollapsibleTrigger>
+                      
+                      <CollapsibleContent>
+                        <div className="mt-3 pt-3 border-t border-border/50 grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <p className="text-muted-foreground">溫度</p>
+                            <p className="font-semibold">{day.minTemp}° ~ {day.maxTemp}°</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">相對濕度</p>
+                            <p className="font-semibold">{day.rh}%</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">風速</p>
+                            <p className="font-semibold">{day.ws} m/s</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">風向</p>
+                            <p className="font-semibold">{day.wd}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">降雨機率</p>
+                            <p className="font-semibold">{day.pop}%</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">體感溫度</p>
+                            <p className="font-semibold">{day.feelTemp}°C</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">舒適度</p>
+                            <p className="font-semibold">{day.ci}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">紫外線指數</p>
+                            <p className="font-semibold">{day.uvi}</p>
+                          </div>
+                        </div>
+                      </CollapsibleContent>
                     </div>
-                    <p className="text-xs mb-2 truncate">{day.weather}</p>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold">{day.minTemp}° ~ {day.maxTemp}°</span>
-                      <span className="text-muted-foreground">
-                        <Droplets className="h-3 w-3 inline" /> {day.pop}%
-                      </span>
-                    </div>
-                  </div>
+                  </Collapsible>
                 ))}
               </div>
             </div>

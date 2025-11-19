@@ -40,6 +40,7 @@ const Index = () => {
         <main className="flex-1 p-4 lg:p-8 max-w-7xl w-full mx-auto">
           <div className="space-y-12">
             <div
+              id="countdown"
               ref={countdownAnim.ref}
               className={`transition-all duration-700 ${
                 countdownAnim.isVisible
@@ -51,6 +52,7 @@ const Index = () => {
             </div>
 
             <div
+              id="weather"
               ref={weatherAnim.ref}
               className={`transition-all duration-700 ${
                 weatherAnim.isVisible
